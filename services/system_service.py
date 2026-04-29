@@ -572,14 +572,13 @@ def initialize_system_components() -> Tuple[bool, List[str], List[str]]:
         errors.append(error_msg)
 
     try:
-        from ReportEngine.flask_interface import initialize_report_engine, REPORT_ENGINE_AVAILABLE
-        if REPORT_ENGINE_AVAILABLE:
-            if initialize_report_engine():
-                logs.append("ReportEngine 初始化成功")
-            else:
-                msg = "ReportEngine 初始化失败"
-                logs.append(msg)
-                errors.append(msg)
+        from services.report_service import initialize_report_engine
+        if initialize_report_engine():
+            logs.append("ReportEngine 初始化成功")
+        else:
+            msg = "ReportEngine 初始化失败"
+            logs.append(msg)
+            errors.append(msg)
     except Exception as exc:
         msg = f"ReportEngine 初始化异常: {exc}"
         logs.append(msg)

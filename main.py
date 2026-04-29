@@ -99,17 +99,5 @@ if __name__ == "__main__":
     host = settings.HOST
     port = settings.PORT
 
-    logger.info(f"FastAPI 主服务器启动: http://{host}:{port}")
-
-    if settings.FLASK_ENABLED:
-        import threading
-        from app import app as flask_app
-
-        def _run_flask():
-            flask_app.run(host=host, port=5001, debug=False, use_reloader=False)
-
-        t = threading.Thread(target=_run_flask, daemon=True)
-        t.start()
-        logger.info(f"Flask 辅助服务器启动: http://{host}:5001")
-
+    logger.info(f"FastAPI 服务器启动: http://{host}:{port}")
     uvicorn.run(app, host=host, port=port, log_level="info")
