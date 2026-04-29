@@ -19,7 +19,7 @@ from .nodes import (
     ReportFormattingNode
 )
 from .state import State
-from .tools import BochaMultimodalSearch, BochaResponse, AnspireAISearch, AnspireResponse
+from .tools import BochaMultimodalSearch, BochaResponse, AnspireAISearch, AnspireResponse, TavilySearchWrapper
 from .utils import settings, Settings, format_search_results_for_prompt
 from .graph import build_media_graph
 
@@ -501,6 +501,34 @@ class AnspireSearchAgent(DeepSearchAgent):
             return self.search_agency.comprehensive_search(query)
 
 
+class TavilySearchAgent(DeepSearchAgent):
+    """调用Tavily搜索引擎的Deep Search Agent"""
+
+    def __init__(self, config: Settings | None = None):
+        self.config = config or settings
+
+        self.llm_client = self._initialize_llm()
+        self.search_agency = TavilySearchWrapper(api_key=self.config.TAVILY_API_KEY)
+        self._initialize_nodes()
+        self.state = State()
+        os.makedirs(self.config.OUTPUT_DIR, exist_ok=True)
+        self.graph = build_media_graph(self)
+        logger.info("Media Agent (Tavily) 已初始化")
+
+    def execute_search_tool(self, tool_name: str, query: str, **kwargs) -> BochaResponse:
+        if tool_name in ("comprehensive_search", "web_search_only"):
+            return self.search_agency.comprehensive_search(query, kwargs.get("max_results", 10))
+        elif tool_name == "search_last_24_hours":
+            return self.search_agency.search_last_24_hours(query)
+        elif tool_name == "search_last_week":
+            return self.search_agency.search_last_week(query)
+        elif tool_name == "search_for_structured_data":
+            return self.search_agency.search_for_structured_data(query)
+        else:
+            logger.info(f"  ⚠️  未知的搜索工具: {tool_name}，使用默认综合搜索")
+            return self.search_agency.comprehensive_search(query)
+
+
 def create_agent(config_file: Optional[str] = None) -> DeepSearchAgent:
     """
     创建Deep Search Agent实例的便捷函数
@@ -512,6 +540,8 @@ def create_agent(config_file: Optional[str] = None) -> DeepSearchAgent:
         DeepSearchAgent实例
     """
     settings = Settings()
-    if settings.SEARCH_TOOL_TYPE == "AnspireAPI":
+    if settings.SEARCH_TOOL_TYPE == "TavilyAPI":
+        return TavilySearchAgent(settings)
+    elif settings.SEARCH_TOOL_TYPE == "AnspireAPI":
         return AnspireSearchAgent(settings)
     return DeepSearchAgent(settings)

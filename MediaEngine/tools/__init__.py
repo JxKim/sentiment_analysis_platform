@@ -6,6 +6,7 @@
 from .search import (
     BochaMultimodalSearch,
     AnspireAISearch,
+    TavilySearchWrapper,
     WebpageResult,
     ImageResult,
     ModalCardResult,
@@ -17,7 +18,8 @@ from .search import (
 __all__ = [
     "BochaMultimodalSearch",
     "AnspireAISearch",
-    "WebpageResult", 
+    "TavilySearchWrapper",
+    "WebpageResult",
     "ImageResult",
     "ModalCardResult",
     "BochaResponse",

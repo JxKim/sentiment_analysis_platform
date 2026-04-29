@@ -368,10 +368,71 @@ class AnspireAISearch:
                                      ToTime=to_time.strftime("%Y-%m-%d %H:%M:%S"))
 
 
-# --- 3. 测试与使用示例 ---
+# --- 3. Tavily 搜索适配器 ---
+
+class TavilySearchWrapper:
+    """
+    将 Tavily API 适配为与 Bocha/Anspire 相同的接口，
+    返回带 .webpages 属性的响应对象，供 MediaEngine Agent 使用。
+    """
+
+    def __init__(self, api_key: Optional[str] = None):
+        try:
+            from tavily import TavilyClient
+        except ImportError:
+            raise ImportError("tavily-python 库未安装，请运行 `pip install tavily-python`。")
+
+        if api_key is None:
+            api_key = settings.TAVILY_API_KEY
+            if not api_key:
+                raise ValueError("Tavily API Key未找到！请设置 TAVILY_API_KEY 环境变量")
+        self._client = TavilyClient(api_key=api_key)
+
+    def _to_webpage(self, item: dict) -> WebpageResult:
+        return WebpageResult(
+            name=item.get('title', ''),
+            url=item.get('url', ''),
+            snippet=item.get('content', ''),
+            date_last_crawled=item.get('published_date', ''),
+        )
+
+    def _search(self, **kwargs) -> BochaResponse:
+        kwargs.setdefault('topic', 'general')
+        resp = self._client.search(**{k: v for k, v in kwargs.items() if v is not None})
+        webpages = [self._to_webpage(r) for r in resp.get('results', [])]
+        return BochaResponse(query=resp.get('query', ''), webpages=webpages)
+
+    def comprehensive_search(self, query: str, max_results: int = 10) -> BochaResponse:
+        logger.info(f"--- TOOL: Tavily综合搜索 (query: {query}) ---")
+        return self._search(query=query, max_results=max_results, search_depth="basic")
+
+    def web_search_only(self, query: str, max_results: int = 15) -> BochaResponse:
+        logger.info(f"--- TOOL: Tavily纯网页搜索 (query: {query}) ---")
+        return self._search(query=query, max_results=max_results, search_depth="basic",
+                            include_answer=False)
+
+    def search_last_24_hours(self, query: str, max_results: int = 10) -> BochaResponse:
+        logger.info(f"--- TOOL: Tavily 24h搜索 (query: {query}) ---")
+        return self._search(query=query, max_results=max_results, time_range="day")
+
+    def search_last_week(self, query: str, max_results: int = 10) -> BochaResponse:
+        logger.info(f"--- TOOL: Tavily周搜索 (query: {query}) ---")
+        return self._search(query=query, max_results=max_results, time_range="week")
+
+    def search_for_structured_data(self, query: str) -> BochaResponse:
+        logger.info(f"--- TOOL: Tavily结构化搜索 (query: {query}) ---")
+        return self._search(query=query, max_results=5, search_depth="advanced",
+                            include_answer=True)
+
+
+# --- 4. Agent 工厂函数 ---
+
 def load_agent_from_config():
     """根据配置文件选择并加载搜索Agent"""
-    if settings.BOCHA_WEB_SEARCH_API_KEY:
+    if settings.SEARCH_TOOL_TYPE == "TavilyAPI":
+        logger.info("加载 TavilySearchWrapper Agent")
+        return TavilySearchWrapper()
+    elif settings.BOCHA_WEB_SEARCH_API_KEY:
         logger.info("加载 BochaMultimodalSearch Agent")
         return BochaMultimodalSearch()
     elif settings.ANSPIRE_API_KEY:
