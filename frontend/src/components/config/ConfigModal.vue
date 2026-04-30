@@ -114,6 +114,7 @@ watch(visible, async (open) => {
       if (!configStore.dirty) {
         await configStore.refreshFromServer()
         Object.assign(localValues, configStore.values)
+        configStore.dirty = false
       }
     }, 10000)
   } else {

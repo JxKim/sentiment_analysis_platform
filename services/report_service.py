@@ -371,9 +371,6 @@ def run_report_generation(task: ReportTask, query: str, custom_template: str = "
             "stage": "failed",
             "task": task.to_dict(),
         })
-        with task_lock:
-            if current_task and current_task.task_id == task.task_id:
-                current_task = None
 
 
 # ── Task management helpers for API layer ────────────────────────────────
