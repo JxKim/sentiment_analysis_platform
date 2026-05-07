@@ -33,7 +33,7 @@ def init_forum_log():
 
 def start_forum_engine():
     try:
-        from ForumEngine.monitor import start_forum_monitoring
+        from engines.ForumEngine.monitor import start_forum_monitoring
         logger.info("ForumEngine: 启动论坛...")
         success = start_forum_monitoring()
         if not success:
@@ -46,7 +46,7 @@ def start_forum_engine():
 
 def stop_forum_engine():
     try:
-        from ForumEngine.monitor import stop_forum_monitoring
+        from engines.ForumEngine.monitor import stop_forum_monitoring
         logger.info("ForumEngine: 停止论坛...")
         stop_forum_monitoring()
         logger.info("ForumEngine: 论坛已停止")
