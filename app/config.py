@@ -103,7 +103,12 @@ class Settings(BaseSettings):
     MAX_REFLECTIONS: int = Field(3, description="最大反思次数")
     MAX_PARAGRAPHS: int = Field(6, description="最大段落数")
     SEARCH_TIMEOUT: int = Field(240, description="单次搜索请求超时")
-    MAX_CONTENT_LENGTH: int = Field(500000, description="搜索最大内容长度")
+    MAX_CONTENT_LENGTH: int = Field(500000, description="搜索最大内容长度（InsightEngine/ReportEngine 使用）")
+    SEARCH_CONTENT_MAX_LENGTH: int = Field(500000, description="搜索最大内容长度（MediaEngine/QueryEngine 使用）")
+    SAVE_INTERMEDIATE_STATES: bool = Field(True, description="是否保存中间状态")
+    MAX_SEARCH_RESULTS: int = Field(20, description="最大搜索结果数（QueryEngine）")
+    # Bocha 兼容键（别名）
+    BOCHA_API_KEY: Optional[str] = Field(None, description="Bocha 兼容键（别名）")
     
     model_config = ConfigDict(
         env_file=ENV_FILE,

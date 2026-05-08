@@ -90,30 +90,26 @@ def _create_agent(engine_type: str):
         if _p not in sys.path:
             sys.path.insert(0, _p)
 
-    from app.config import settings
+    from app.config import settings, Settings
 
     if engine_type == 'insight':
-        from InsightEngine import DeepSearchAgent, Settings
+        from InsightEngine import DeepSearchAgent
         model = settings.INSIGHT_ENGINE_MODEL_NAME or "kimi-k2-0711-preview"
         config = Settings(
             INSIGHT_ENGINE_API_KEY=settings.INSIGHT_ENGINE_API_KEY,
             INSIGHT_ENGINE_BASE_URL=settings.INSIGHT_ENGINE_BASE_URL,
             INSIGHT_ENGINE_MODEL_NAME=model,
-            DB_HOST=settings.DB_HOST,
-            DB_USER=settings.DB_USER,
-            DB_PASSWORD=settings.DB_PASSWORD,
-            DB_NAME=settings.DB_NAME,
-            DB_PORT=settings.DB_PORT,
-            DB_CHARSET=settings.DB_CHARSET,
+            DB_HOST=settings.DB_HOST, DB_USER=settings.DB_USER,
+            DB_PASSWORD=settings.DB_PASSWORD, DB_NAME=settings.DB_NAME,
+            DB_PORT=settings.DB_PORT, DB_CHARSET=settings.DB_CHARSET,
             DB_DIALECT=settings.DB_DIALECT,
-            MAX_REFLECTIONS=2,
-            MAX_CONTENT_LENGTH=500000,
+            MAX_REFLECTIONS=2, MAX_CONTENT_LENGTH=500000,
             OUTPUT_DIR=OUTPUT_DIRS['insight'],
         )
         return DeepSearchAgent(config), config
 
     if engine_type == 'media':
-        from MediaEngine import DeepSearchAgent, TavilySearchAgent, AnspireSearchAgent, Settings
+        from MediaEngine import DeepSearchAgent, TavilySearchAgent, AnspireSearchAgent
         model = settings.MEDIA_ENGINE_MODEL_NAME or "gemini-2.5-pro"
         search_type = settings.SEARCH_TOOL_TYPE or "TavilyAPI"
 
@@ -125,8 +121,7 @@ def _create_agent(engine_type: str):
             TAVILY_API_KEY=settings.TAVILY_API_KEY,
             BOCHA_WEB_SEARCH_API_KEY=settings.BOCHA_WEB_SEARCH_API_KEY,
             ANSPIRE_API_KEY=settings.ANSPIRE_API_KEY,
-            MAX_REFLECTIONS=2,
-            SEARCH_CONTENT_MAX_LENGTH=20000,
+            MAX_REFLECTIONS=2, SEARCH_CONTENT_MAX_LENGTH=20000,
             OUTPUT_DIR=OUTPUT_DIRS['media'],
         )
 
@@ -141,15 +136,14 @@ def _create_agent(engine_type: str):
         return agent, config
 
     if engine_type == 'query':
-        from QueryEngine import DeepSearchAgent, Settings
+        from QueryEngine import DeepSearchAgent
         model = settings.QUERY_ENGINE_MODEL_NAME or "deepseek-chat"
         config = Settings(
             QUERY_ENGINE_API_KEY=settings.QUERY_ENGINE_API_KEY,
             QUERY_ENGINE_BASE_URL=settings.QUERY_ENGINE_BASE_URL,
             QUERY_ENGINE_MODEL_NAME=model,
             TAVILY_API_KEY=settings.TAVILY_API_KEY,
-            MAX_REFLECTIONS=2,
-            SEARCH_CONTENT_MAX_LENGTH=20000,
+            MAX_REFLECTIONS=2, SEARCH_CONTENT_MAX_LENGTH=20000,
             OUTPUT_DIR=OUTPUT_DIRS['query'],
         )
         return DeepSearchAgent(config), config
