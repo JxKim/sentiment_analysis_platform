@@ -531,6 +531,26 @@ class DeepSearchAgent:
         logger.info(f"开始深度研究: {query}")
         logger.info(f"{'=' * 60}")
 
+        # 快速检查本地数据库是否有舆情数据
+        # 使用 execute_search_tool（走 mock 兼容路径）查询热点内容
+        try:
+            probe = self.execute_search_tool("search_hot_content", query, time_period="year", limit=1)
+            if not probe.results or len(probe.results) == 0:
+                logger.warning("本地舆情数据库为空，InsightEngine 退出研究")
+                self.state.query = query
+                self.state.final_report = ""
+                self.state.is_completed = False
+                raise RuntimeError(
+                    "本地舆情数据库暂无数据，请先运行爬虫采集社交媒体数据。"
+                )
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning(f"数据库连通性检查失败: {e}")
+            raise RuntimeError(
+                f"无法连接到本地舆情数据库，InsightEngine 无法执行。"
+            ) from e
+
         try:
             # 构造初始状态
             initial_state = {
