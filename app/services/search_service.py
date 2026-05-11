@@ -48,6 +48,7 @@ def run_engine_task(engine_type: str, query: str):
         _log_file,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name} - {message}",
         level="INFO", encoding="utf-8", rotation="10 MB",
+        filter=lambda record: engine_type in record["name"],
     )
 
     try:
