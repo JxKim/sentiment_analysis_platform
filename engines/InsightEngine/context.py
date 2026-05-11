@@ -36,6 +36,7 @@ class InsightContext:
 
     llm_client: LLMClient
     config: Settings
+    engine_name: str = "insight"
     search_agency: MediaCrawlerDB = field(default_factory=MediaCrawlerDB)
     progress_callback: Optional[Callable] = None
 

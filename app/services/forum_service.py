@@ -21,6 +21,9 @@ LOG_DIR.mkdir(exist_ok=True)
 # Optional callback for framework-specific init
 _on_init_forum_log: Optional[Callable[[], None]] = None
 
+# Event-driven forum handler (global, replaces LogMonitor)
+_forum_handler: Optional[Any] = None
+
 
 def init_forum_log():
     """Initialize (clear) forum.log with a header line."""
@@ -32,24 +35,27 @@ def init_forum_log():
 
 
 def start_forum_engine():
+    global _forum_handler
     try:
-        from engines.ForumEngine.monitor import start_forum_monitoring
-        logger.info("ForumEngine: 启动论坛...")
-        success = start_forum_monitoring()
-        if not success:
-            logger.info("ForumEngine: 论坛启动失败")
-        return success
+        if _forum_handler is not None:
+            return True
+        from engines.ForumEngine.handler import ForumEventHandler
+        _forum_handler = ForumEventHandler()
+        _forum_handler.start()
+        logger.info("ForumEngine: 论坛事件处理器已启动")
+        return True
     except Exception as e:
         logger.exception(f"ForumEngine: 启动论坛失败: {e}")
         return False
 
 
 def stop_forum_engine():
+    global _forum_handler
     try:
-        from engines.ForumEngine.monitor import stop_forum_monitoring
-        logger.info("ForumEngine: 停止论坛...")
-        stop_forum_monitoring()
-        logger.info("ForumEngine: 论坛已停止")
+        if _forum_handler is not None:
+            _forum_handler.stop()
+            _forum_handler = None
+            logger.info("ForumEngine: 论坛已停止")
     except Exception as e:
         logger.exception(f"ForumEngine: 停止论坛失败: {e}")
 

@@ -12,7 +12,8 @@ from .llms import LLMClient
 class QueryContext:
     llm_client: LLMClient
     config: Any
-    search_agency: Any  # TavilyNewsAgency
+    search_agency: Any
+    engine_name: str = "query"
     progress_callback: Optional[Callable] = None
 
     def execute_search(self, tool_name: str, query: str, **kwargs) -> Any:

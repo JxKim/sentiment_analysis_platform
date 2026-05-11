@@ -7,6 +7,8 @@ from copy import deepcopy
 
 from loguru import logger
 
+from app.services.event_bus import publish
+
 from ..state import MediaGraphState
 from ..prompts import SYSTEM_PROMPT_FIRST_SUMMARY
 from ..utils.text_processing import (
@@ -54,6 +56,7 @@ class InitialSummaryNode:
         cleaned = remove_reasoning_from_output(output)
         cleaned = clean_json_tags(cleaned)
         logger.info(f"  清理后的输出: {cleaned}")
+        publish("summary_ready", {"source": self.ctx.engine_name, "summary": cleaned, "type": "initial"})
         try:
             result = json.loads(cleaned)
             if isinstance(result, dict):

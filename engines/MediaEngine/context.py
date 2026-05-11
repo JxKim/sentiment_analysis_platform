@@ -18,8 +18,9 @@ class MediaContext:
     """Holds all dependencies needed by MediaEngine's LangGraph nodes."""
 
     llm_client: LLMClient
-    config: Any  # Settings-like object
-    search_agency: Any  # BochaMultimodalSearch / AnspireAISearch / TavilySearchWrapper
+    config: Any
+    search_agency: Any
+    engine_name: str = "media"
     progress_callback: Optional[Callable] = None
 
     def execute_search(self, tool_name: str, query: str, **kwargs) -> Any:
