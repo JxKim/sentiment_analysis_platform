@@ -6,6 +6,7 @@ buffers them, writes to forum.log for GraphRAG, and periodically
 triggers HOST speech via LLM.
 """
 
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
