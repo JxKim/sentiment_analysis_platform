@@ -15,9 +15,9 @@ from app.services.event_bus import publish
 from app.services.forum_service import start_forum_engine
 
 OUTPUT_DIRS = {
-    'insight': 'insight_engine_streamlit_reports',
-    'media': 'media_engine_streamlit_reports',
-    'query': 'query_engine_streamlit_reports',
+    'insight': 'insight_reports',
+    'media': 'media_reports',
+    'query': 'query_reports',
 }
 _LOG_DIR = Path(__file__).resolve().parent.parent.parent / "logs"
 
