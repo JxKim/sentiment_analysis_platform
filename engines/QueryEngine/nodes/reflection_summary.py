@@ -44,6 +44,9 @@ class ReflectionSummaryNode:
         cleaned = remove_reasoning_from_output(output)
         cleaned = clean_json_tags(cleaned)
         logger.info(f"  清理后的输出: {cleaned}")
+        # LLM may return actual newlines in JSON string values — escape them
+        cleaned = cleaned.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
+
         try:
             result = json.loads(cleaned)
             if isinstance(result, dict):

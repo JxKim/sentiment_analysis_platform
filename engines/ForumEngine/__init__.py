@@ -1,7 +1,10 @@
 """
-ForumEngine - 监控和记录三个Engine的SummaryNode和ReportFormattingNode输出
+ForumEngine — event-driven forum handler.
+
+Subscribes to summary_ready events from search engines and manages
+forum session, HOST speech generation, and forum.log persistence.
 """
 
-from .monitor import LogMonitor
+from .handler import ForumEventHandler
 
-__all__ = ['LogMonitor']
+__all__ = ['ForumEventHandler']
