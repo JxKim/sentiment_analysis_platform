@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, str(project_root))
 
 import pytest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, mock_open
 import time
 import json
 
@@ -254,15 +254,6 @@ class TestPredefinedConfigs:
 
 # ==================== ForumReader ====================
 
-SAMPLE_LOG_LINES = [
-    "[10:00:01] [HOST] 这是HOST发言1\\n第二行\n",
-    "[10:00:02] [INSIGHT] Agent发言\n",
-    "[10:00:03] [HOST] 这是HOST发言2\n",
-    "[10:00:04] [MEDIA] Media发言\n",
-    "[10:00:05] [QUERY] Query发言\n",
-]
-
-
 class TestGetLatestHostSpeech:
     """get_latest_host_speech 函数（从 EventBus 内存缓存读取）"""
 
@@ -320,56 +311,6 @@ class TestGetLatestHostSpeech:
                 assert fr._latest_host_speech == "已有发言"
         finally:
             self._set_cache(None)
-
-
-class TestGetAllHostSpeeches:
-    """get_all_host_speeches 函数"""
-
-    def test_found_multiple(self):
-        from app.utils.forum_reader import get_all_host_speeches
-        m = mock_open(read_data="".join(SAMPLE_LOG_LINES))
-        with patch("app.utils.forum_reader.Path.exists", return_value=True):
-            with patch("builtins.open", m):
-                results = get_all_host_speeches(log_dir="/tmp/logs")
-
-        assert len(results) == 2
-        assert results[0]["content"] == "这是HOST发言1\n第二行"
-        assert results[1]["content"] == "这是HOST发言2"
-
-    def test_file_not_exists(self):
-        from app.utils.forum_reader import get_all_host_speeches
-        with patch("app.utils.forum_reader.Path.exists", return_value=False):
-            results = get_all_host_speeches(log_dir="/tmp/logs")
-        assert results == []
-
-    def test_empty(self):
-        from app.utils.forum_reader import get_all_host_speeches
-        with patch("app.utils.forum_reader.Path.exists", return_value=True):
-            with patch("builtins.open", mock_open(read_data="")):
-                results = get_all_host_speeches(log_dir="/tmp/logs")
-        assert results == []
-
-
-class TestGetRecentAgentSpeeches:
-    """get_recent_agent_speeches 函数"""
-
-    def test_found_with_limit(self):
-        from app.utils.forum_reader import get_recent_agent_speeches
-        m = mock_open(read_data="".join(SAMPLE_LOG_LINES))
-        with patch("app.utils.forum_reader.Path.exists", return_value=True):
-            with patch("builtins.open", m):
-                results = get_recent_agent_speeches(log_dir="/tmp/logs", limit=2)
-
-        assert len(results) == 2
-        # 反向搜索: QUERY, MEDIA, HOST, INSIGHT, HOST → AGENT筛选: QUERY, MEDIA → reverse → MEDIA, QUERY
-        assert results[0]["agent"] == "MEDIA"
-        assert results[1]["agent"] == "QUERY"
-
-    def test_file_not_exists(self):
-        from app.utils.forum_reader import get_recent_agent_speeches
-        with patch("app.utils.forum_reader.Path.exists", return_value=False):
-            results = get_recent_agent_speeches(log_dir="/tmp/logs")
-        assert results == []
 
 
 class TestFormatHostSpeechForPrompt:
