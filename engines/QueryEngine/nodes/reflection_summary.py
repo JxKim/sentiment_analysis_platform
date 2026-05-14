@@ -5,6 +5,7 @@ from copy import deepcopy
 from loguru import logger
 
 from app.services.event_bus import publish
+from app.services.event_types import EventType
 from ..state import QueryGraphState
 from ..prompts import SYSTEM_PROMPT_REFLECTION_SUMMARY
 from ..utils.text_processing import remove_reasoning_from_output, clean_json_tags, fix_incomplete_json, format_search_results_for_prompt
@@ -67,9 +68,9 @@ class ReflectionSummaryNode:
         cleaned = cleaned.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
         summary = self._extract_summary(cleaned, ("paragraph_latest_state", "updated_paragraph_latest_state", "content", "summary"))
         if summary is not None:
-            publish("summary_ready", {"source": self.ctx.engine_name, "summary": summary, "type": "reflection"})
+            publish(EventType.SUMMARY_READY, {"source": self.ctx.engine_name, "summary": summary, "type": "reflection"})
             return summary
-        publish("summary_ready", {"source": self.ctx.engine_name, "summary": cleaned, "type": "reflection"})
+        publish(EventType.SUMMARY_READY, {"source": self.ctx.engine_name, "summary": cleaned, "type": "reflection"})
         return cleaned
 
     @staticmethod

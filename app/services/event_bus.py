@@ -15,6 +15,7 @@ _subscribers: List[EventCallback] = []
 def publish(event_type: str, data: Dict[str, Any]) -> None:
     """Publish an event to all registered subscribers."""
     with _lock:
+        # TODO: 这里为什么要这么写？_subscribers不是已经是一个list了吗？
         subs = list(_subscribers)
     for callback in subs:
         try:

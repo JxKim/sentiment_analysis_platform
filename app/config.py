@@ -93,6 +93,14 @@ class Settings(BaseSettings):
 
     
     # ================== Insight Engine 搜索配置 ====================
+    # 聚类
+    ENABLE_CLUSTERING: bool = Field(True, description="是否启用搜索结果聚类")
+    MAX_CLUSTERED_RESULTS: int = Field(50, description="聚类后最大结果数")
+    RESULTS_PER_CLUSTER: int = Field(5, description="每个聚类采样数")
+    # 情感分析
+    SENTIMENT_ANALYSIS_ENABLED: bool = Field(True, description="是否启用情感分析（全局开关）")
+    ENABLE_SENTIMENT_PER_SEARCH: bool = Field(True, description="每次搜索默认是否对结果做情感分析（可由 LLM 参数覆盖）")
+    # 搜索
     DEFAULT_SEARCH_HOT_CONTENT_LIMIT: int = Field(100, description="热榜内容默认最大数")
     DEFAULT_SEARCH_TOPIC_GLOBALLY_LIMIT_PER_TABLE: int = Field(50, description="按表全局话题最大数")
     DEFAULT_SEARCH_TOPIC_BY_DATE_LIMIT_PER_TABLE: int = Field(100, description="按日期话题最大数")

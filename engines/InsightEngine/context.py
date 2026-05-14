@@ -5,29 +5,22 @@ Holds config, LLM client, search tools, and utility methods.
 LangGraph node classes receive ctx and pull what they need.
 """
 
-import json
-import os
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import numpy as np
 from loguru import logger
-from sklearn.cluster import KMeans
 
 from .llms import LLMClient
 from .tools import (
+    ClusteringService,
     DBResponse,
     MediaCrawlerDB,
     get_keyword_optimizer,
     multilingual_sentiment_analyzer,
+    WeiboMultilingualSentimentAnalyzer,
 )
-from .utils.config import Settings
-
-ENABLE_CLUSTERING: bool = True
-MAX_CLUSTERED_RESULTS: int = 50
-RESULTS_PER_CLUSTER: int = 5
+from app.config import Settings
 
 
 @dataclass
@@ -41,10 +34,12 @@ class InsightContext:
     progress_callback: Optional[Callable] = None
 
     # Lazy-loaded helpers
-    _clustering_model: Any = None
-    sentiment_analyzer: Any = None
+    clustering: ClusteringService = None
+    sentiment_analyzer: WeiboMultilingualSentimentAnalyzer = None
 
     def __post_init__(self):
+        if self.clustering is None:
+            self.clustering = ClusteringService(self.config)
         if self.sentiment_analyzer is None:
             self.sentiment_analyzer = multilingual_sentiment_analyzer
 
@@ -52,8 +47,19 @@ class InsightContext:
 
     def execute_search(self, tool_name: str, query: str, **kwargs) -> DBResponse:
         """
-        Execute a database query tool with keyword optimization and sentiment analysis.
-        (Moved from DeepSearchAgent.execute_search_tool)
+        根据tool_name来执行查询：
+        search_hot_content:
+            直接调用search_hot_content，并对热点内容进行情感分析
+        analyze_sentiment:
+            直接进行情感分析，返回DBResponse
+        其他工具：
+            1. 进行关键词优化
+            2. 对各个关键词进行搜索
+            3. 进行聚类
+            4. 进行情感分析
+            5. 返回DBResponse
+
+
         """
         logger.info(f"  → 执行数据库查询工具: {tool_name}")
 
@@ -63,8 +69,7 @@ class InsightContext:
             response = self.search_agency.search_hot_content(
                 time_period=time_period, limit=limit
             )
-            enable_sentiment = kwargs.get("enable_sentiment", True)
-            if enable_sentiment and response.results:
+            if self._sentiment_enabled(kwargs) and response.results:
                 logger.info("  🎭 开始对热点内容进行情感分析...")
                 analysis = self._perform_sentiment_analysis(response.results)
                 if analysis:
@@ -104,8 +109,8 @@ class InsightContext:
         unique_results = self._deduplicate_results(all_results)
         logger.info(f"  总计 {total_count} 条，去重后 {len(unique_results)} 条")
 
-        if ENABLE_CLUSTERING:
-            unique_results = self._cluster_and_sample_results(unique_results)
+        if self.config.ENABLE_CLUSTERING:
+            unique_results = self.clustering.cluster_and_sample(unique_results)
 
         response = DBResponse(
             tool_name=f"{tool_name}_optimized",
@@ -119,8 +124,7 @@ class InsightContext:
             results_count=len(unique_results),
         )
 
-        enable_sentiment = kwargs.get("enable_sentiment", True)
-        if enable_sentiment and unique_results:
+        if self._sentiment_enabled(kwargs) and unique_results:
             logger.info("  🎭 开始对搜索结果进行情感分析...")
             analysis = self._perform_sentiment_analysis(unique_results)
             if analysis:
@@ -155,46 +159,6 @@ class InsightContext:
         limit = self.config.DEFAULT_SEARCH_TOPIC_GLOBALLY_LIMIT_PER_TABLE
         return self.search_agency.search_topic_globally(topic=keyword, limit_per_table=limit)
 
-    # ── Clustering ────────────────────────────────────────────────────
-
-    def _get_clustering_model(self):
-        if self._clustering_model is None:
-            from sentence_transformers import SentenceTransformer
-            logger.info("  加载聚类模型 (paraphrase-multilingual-MiniLM-L12-v2)...")
-            self._clustering_model = SentenceTransformer(
-                "paraphrase-multilingual-MiniLM-L12-v2"
-            )
-        return self._clustering_model
-
-    def _cluster_and_sample_results(self, results: list, max_results: int = MAX_CLUSTERED_RESULTS,
-                                    results_per_cluster: int = RESULTS_PER_CLUSTER) -> list:
-        if len(results) <= max_results:
-            return results
-        try:
-            texts = [r.title_or_content[:500] for r in results]
-            model = self._get_clustering_model()
-            embeddings = model.encode(texts, show_progress_bar=False)
-            n_clusters = min(max(2, max_results // results_per_cluster), len(results))
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-            labels = kmeans.fit_predict(embeddings)
-
-            sampled = []
-            for cid in range(n_clusters):
-                indices = np.flatnonzero(labels == cid)
-                cluster = [(results[i], i) for i in indices]
-                cluster.sort(key=lambda x: x[0].hotness_score or 0, reverse=True)
-                for r, _ in cluster[:results_per_cluster]:
-                    sampled.append(r)
-                    if len(sampled) >= max_results:
-                        break
-                if len(sampled) >= max_results:
-                    break
-            logger.info(f"  聚类: {len(results)} 条 -> {n_clusters} 主题 -> {len(sampled)} 条")
-            return sampled
-        except Exception as e:
-            logger.warning(f"  聚类失败: {e}")
-            return results[:max_results]
-
     def _deduplicate_results(self, results: list) -> list:
         seen = set()
         unique = []
@@ -206,6 +170,12 @@ class InsightContext:
         return unique
 
     # ── Sentiment analysis ────────────────────────────────────────────
+
+    def _sentiment_enabled(self, kwargs: dict) -> bool:
+        """全局开关 + 每次搜索 per-call 开关的统一判断。"""
+        if not self.config.SENTIMENT_ANALYSIS_ENABLED:
+            return False
+        return kwargs.get("enable_sentiment", self.config.ENABLE_SENTIMENT_PER_SEARCH)
 
     def _perform_sentiment_analysis(self, results: list) -> Optional[Dict[str, Any]]:
         try:

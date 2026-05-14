@@ -7,6 +7,7 @@ import threading
 from typing import Optional
 
 from app.services.event_bus import subscribe
+from app.services.event_types import EventType
 
 # ── EventBus-backed cache ──────────────────────────────────────────
 
@@ -17,7 +18,7 @@ _cache_lock = threading.Lock()
 def _on_forum_message(event_type: str, data: dict):
     """EventBus subscriber: cache latest HOST speech in memory."""
     global _latest_host_speech
-    if event_type == "forum_message" and data.get("type") == "host":
+    if event_type == EventType.FORUM_MESSAGE and data.get("type") == "host":
         content = data.get("content", "")
         if content:
             with _cache_lock:

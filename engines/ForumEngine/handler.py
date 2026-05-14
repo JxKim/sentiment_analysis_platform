@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 from loguru import logger
 
 from app.services.event_bus import publish, subscribe, unsubscribe
+from app.services.event_types import EventType
 
 try:
     from .llm_host import generate_host_speech
@@ -48,7 +49,7 @@ class ForumEventHandler:
 
     def on_event(self, event_type: str, data: Dict):
         """Dispatch events from the event bus."""
-        if event_type == "summary_ready":
+        if event_type == EventType.SUMMARY_READY:
             self._handle_summary(data)
 
     def _handle_summary(self, data: Dict):
@@ -70,7 +71,7 @@ class ForumEventHandler:
             self.buffer.append(log_line)
 
             # Publish forum_message for SSE
-            publish("forum_message", {
+            publish(EventType.FORUM_MESSAGE, {
                 "type": "agent",
                 "sender": f"{source.title()} Engine",
                 "content": summary,
@@ -111,7 +112,7 @@ class ForumEventHandler:
             speech = generate_host_speech(recent)
             if speech:
                 self._write_forum_log(speech, "HOST")
-                publish("forum_message", {
+                publish(EventType.FORUM_MESSAGE, {
                     "type": "host",
                     "sender": "Forum Host",
                     "content": speech,

@@ -32,7 +32,7 @@ class InitialSearchNode:
         total = len(paragraphs)
 
         pct = int(20 + (idx + 0.3) / total * 60)
-        self._pc({
+        self.ctx.progress_callback({
             "status": "processing",
             "message": f"处理段落 {idx+1}/{total}: {para['title']}",
             "progress_pct": pct,
@@ -76,9 +76,6 @@ class InitialSearchNode:
 
     # ── Private helpers ──────────────────────────────────────────────
 
-    def _pc(self, data: dict):
-        if self.ctx.progress_callback:
-            self.ctx.progress_callback(data)
 
     def _parse_search_output(self, output: str) -> dict:
         cleaned = remove_reasoning_from_output(output)

@@ -8,6 +8,7 @@ from copy import deepcopy
 from loguru import logger
 
 from app.services.event_bus import publish
+from app.services.event_types import EventType
 from app.utils.forum_reader import get_latest_host_speech, format_host_speech_for_prompt
 from ..state import InsightGraphState
 from ..prompts import SYSTEM_PROMPT_REFLECTION_SUMMARY
@@ -17,7 +18,7 @@ from ..utils.text_processing import (
     fix_incomplete_json,
 )
 from ..utils import format_search_results_for_prompt
-
+from ..context import InsightContext
 
 
 
@@ -76,7 +77,7 @@ class ReflectionSummaryNode:
             updated[idx]["research"]["is_completed"] = True
             total = len(updated)
             pct = int(20 + (idx + 1) / total * 60)
-            self._pc({
+            self.ctx.progress_callback({
                 "status": "processing",
                 "message": f"段落 {idx+1}/{total} 完成",
                 "progress_pct": pct,
@@ -89,9 +90,6 @@ class ReflectionSummaryNode:
 
     # ── Private helpers ──────────────────────────────────────────────
 
-    def _pc(self, data: dict):
-        if self.ctx.progress_callback:
-            self.ctx.progress_callback(data)
 
     def _parse_summary(self, output: str) -> str:
         cleaned = remove_reasoning_from_output(output)
@@ -100,9 +98,9 @@ class ReflectionSummaryNode:
         cleaned = cleaned.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
         summary = self._extract_summary(cleaned, ("paragraph_latest_state", "updated_paragraph_latest_state", "content", "summary"))
         if summary is not None:
-            publish("summary_ready", {"source": self.ctx.engine_name, "summary": summary, "type": "reflection"})
+            publish(EventType.SUMMARY_READY, {"source": self.ctx.engine_name, "summary": summary, "type": "reflection"})
             return summary
-        publish("summary_ready", {"source": self.ctx.engine_name, "summary": cleaned, "type": "reflection"})
+        publish(EventType.SUMMARY_READY, {"source": self.ctx.engine_name, "summary": cleaned, "type": "reflection"})
         return cleaned
 
     @staticmethod

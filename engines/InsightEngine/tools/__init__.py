@@ -22,6 +22,7 @@ from .sentiment_analyzer import (
     multilingual_sentiment_analyzer,
     analyze_sentiment
 )
+from .clustering import ClusteringService
 
 __all__ = [
     "MediaCrawlerDB",
@@ -36,5 +37,6 @@ __all__ = [
     "SentimentResult",
     "BatchSentimentResult",
     "multilingual_sentiment_analyzer",
-    "analyze_sentiment"
+    "analyze_sentiment",
+    "ClusteringService",
 ]

@@ -28,8 +28,12 @@ except ImportError:
     TRANSFORMERS_AVAILABLE = False
 
 
-# INFO：若想跳过情感分析，可手动切换此开关为False
-SENTIMENT_ANALYSIS_ENABLED = True
+# 情感分析全局开关从配置读取
+try:
+    from app.config import settings as _app_settings
+    SENTIMENT_ANALYSIS_ENABLED = _app_settings.SENTIMENT_ANALYSIS_ENABLED
+except Exception:
+    SENTIMENT_ANALYSIS_ENABLED = True
 
 
 def _describe_missing_dependencies() -> str:
@@ -628,20 +632,15 @@ class WeiboMultilingualSentimentAnalyzer:
         }
 
 
-# 创建全局实例（延迟初始化）
+# 创建全局实例
 multilingual_sentiment_analyzer = WeiboMultilingualSentimentAnalyzer()
 
-
-def enable_sentiment_analysis() -> bool:
-    """Public helper to enable sentiment analysis at runtime."""
-    return multilingual_sentiment_analyzer.enable()
-
-
-def disable_sentiment_analysis(
-    reason: Optional[str] = None, drop_state: bool = False
-) -> None:
-    """Public helper to disable sentiment analysis at runtime."""
-    multilingual_sentiment_analyzer.disable(reason=reason, drop_state=drop_state)
+# 若配置启用了情感分析，在模块加载时预初始化模型
+if SENTIMENT_ANALYSIS_ENABLED and not multilingual_sentiment_analyzer.is_disabled:
+    try:
+        multilingual_sentiment_analyzer.initialize()
+    except Exception:
+        pass  # initialize() 内部已有异常处理和 disable 逻辑
 
 
 def analyze_sentiment(
@@ -673,6 +672,8 @@ def analyze_sentiment(
 
 if __name__ == "__main__":
     # 测试代码
+    import os
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
     analyzer = WeiboMultilingualSentimentAnalyzer()
 
     if analyzer.initialize():

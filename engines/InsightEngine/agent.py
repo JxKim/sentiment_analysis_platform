@@ -13,7 +13,7 @@ from loguru import logger
 from .context import InsightContext
 from .graph import build_insight_graph
 from .llms import LLMClient
-from .utils.config import Settings, settings
+from app.config import Settings, settings
 
 
 # ── Module-level research function ────────────────────────────────────────

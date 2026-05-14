@@ -26,7 +26,7 @@ class GenerateStructureNode:
 
     def __call__(self, state: InsightGraphState) -> dict:
         query = state["query"]
-        self._pc({"status": "structure", "message": "正在生成报告结构...", "progress_pct": 10})
+        self.ctx.progress_callback({"status": "structure", "message": "正在生成报告结构...", "progress_pct": 10})
         logger.info(f"\n{'=' * 60}\n[LangGraph] 生成报告结构: {query}")
 
         # TODO：这里一定要修复掉，完全没有必要使用
@@ -59,10 +59,6 @@ class GenerateStructureNode:
         }
 
     # ── Private helpers ──────────────────────────────────────────────
-
-    def _pc(self, data: dict):
-        if self.ctx.progress_callback:
-            self.ctx.progress_callback(data)
 
     def _parse_structure(self, output: str) -> list:
         cleaned = remove_reasoning_from_output(output)

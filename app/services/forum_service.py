@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional
 from loguru import logger
 
 from app.services.event_bus import publish
+from app.services.event_types import EventType
 
 LOG_DIR = Path('logs')
 LOG_DIR.mkdir(exist_ok=True)
@@ -135,11 +136,11 @@ def _monitor_forum_log():
 
                                 parsed = parse_forum_log_line(line)
                                 if parsed:
-                                    publish('forum_message', parsed)
+                                    publish(EventType.FORUM_MESSAGE, parsed)
 
                                 timestamp = datetime.now().strftime('%H:%M:%S')
                                 formatted = f"[{timestamp}] {line}"
-                                publish('console_output', {'app': 'forum', 'line': formatted})
+                                publish(EventType.CONSOLE_OUTPUT, {'app': 'forum', 'line': formatted})
 
                         last_position = f.tell()
 

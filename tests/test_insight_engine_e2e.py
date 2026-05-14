@@ -165,7 +165,7 @@ class TestInsightEngineE2E:
         self.progress_callback = None
         from InsightEngine.agent import run_research
         from InsightEngine.llms import LLMClient
-        from InsightEngine.utils.config import Settings
+        from app.config import Settings
 
         self.config = Settings(
             INSIGHT_ENGINE_API_KEY="sk-test-fake-key",
@@ -262,8 +262,6 @@ class TestInsightEngineE2E:
 
     def test_state_sync(self):
         """验证 research() 返回结果包含完整段落和搜索历史（供 citations 提取）。"""
-        from InsightEngine.models import Paragraph
-
         result = self._research("测试查询")
         report = result["final_report"]
         paragraphs = result.get("paragraphs", [])
@@ -273,13 +271,13 @@ class TestInsightEngineE2E:
         assert len(paragraphs) == 2
 
         for p_dict in paragraphs:
-            para = Paragraph.from_dict(p_dict)
-            assert para.title
-            assert para.research.latest_summary
-            assert para.research.is_completed
-            assert len(para.research.search_history) > 0
-            for search in para.research.search_history:
-                assert search.query
+            assert p_dict.get("title")
+            research = p_dict.get("research", {})
+            assert research.get("latest_summary")
+            assert research.get("is_completed")
+            assert len(research.get("search_history", [])) > 0
+            for search in research["search_history"]:
+                assert search.get("query")
 
     def test_deep_search_agent_removed(self):
         """验证 DeepSearchAgent 类已从 InsightEngine 中移除。"""
@@ -406,7 +404,7 @@ def agent():
 
     from InsightEngine.agent import run_research
     from InsightEngine.llms import LLMClient
-    from InsightEngine.utils.config import Settings
+    from app.config import Settings
 
     config = Settings(OUTPUT_DIR="/tmp/test_insight_reports", **_AGENT_CONFIG)
     llm_client = LLMClient(

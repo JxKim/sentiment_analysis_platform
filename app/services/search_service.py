@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 from loguru import logger
 
 from app.services.event_bus import publish
+from app.services.event_types import EventType
 from app.services.forum_service import start_forum_engine
 
 OUTPUT_DIRS = {
@@ -52,7 +53,7 @@ def run_engine_task(engine_type: str, query: str):
     )
 
     try:
-        publish("engine_progress", {
+        publish(EventType.ENGINE_PROGRESS, {
             "engine": engine_type, "status": "starting",
             "message": "正在初始化引擎...", "progress_pct": 0,
         })
@@ -69,7 +70,7 @@ def run_engine_task(engine_type: str, query: str):
         final_report = result.get("final_report", "")
         citations = _extract_citations_from_result(result)
 
-        publish("engine_progress", {
+        publish(EventType.ENGINE_PROGRESS, {
             "engine": engine_type, "status": "finalizing",
             "message": "研究完成", "progress_pct": 100,
         })
@@ -115,9 +116,10 @@ def _run_insight_research(query: str) -> Dict[str, Any]:
         base_url=config.INSIGHT_ENGINE_BASE_URL,
     )
 
+    # 这里也是一种抽象，InsightEngine当中所有的节点的事件，event_type全部都是engine_progress，
     def progress_callback(data):
         "回调函数，用以通过SSE机制，在前端展示进度"
-        publish("engine_progress", {"engine": "insight", **data})
+        publish(EventType.ENGINE_PROGRESS, {"engine": "insight", **data})
 
     return run_research(query, config, llm_client, progress_callback)
 
@@ -157,7 +159,7 @@ def _run_media_research(query: str) -> Dict[str, Any]:
         search_agency = BochaMultimodalSearch(api_key=config.BOCHA_WEB_SEARCH_API_KEY)
 
     def progress_callback(data):
-        publish("engine_progress", {"engine": "media", **data})
+        publish(EventType.ENGINE_PROGRESS, {"engine": "media", **data})
 
     return run_research(query, config, llm_client, search_agency, progress_callback)
 
@@ -185,29 +187,28 @@ def _run_query_research(query: str) -> Dict[str, Any]:
     search_agency = TavilyNewsAgency(api_key=config.TAVILY_API_KEY)
 
     def progress_callback(data):
-        publish("engine_progress", {"engine": "query", **data})
+        publish(EventType.ENGINE_PROGRESS, {"engine": "query", **data})
 
     return run_research(query, config, llm_client, search_agency, progress_callback)
 
 
 def _extract_citations_from_result(result: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Extract search history from run_research() result dict."""
-    from engines.InsightEngine.models import Paragraph
-
     citations: List[Dict[str, Any]] = []
     paragraphs = result.get("paragraphs", [])
     for p_idx, p_dict in enumerate(paragraphs):
-        paragraph = Paragraph.from_dict(p_dict) if isinstance(p_dict, dict) else p_dict
-        for search in paragraph.research.search_history:
+        research = p_dict.get("research", {}) if isinstance(p_dict, dict) else {}
+        search_history = research.get("search_history", [])
+        for search in search_history:
             citations.append({
                 "paragraph_index": p_idx,
-                "paragraph_title": paragraph.title,
-                "query": getattr(search, 'query', ''),
-                "url": getattr(search, 'url', None),
-                "title": getattr(search, 'title', None),
-                "content": (getattr(search, 'content', '') or '')[:500],
-                "score": getattr(search, 'score', None),
-                "search_count": paragraph.research.get_search_count(),
-                "reflection_count": paragraph.research.reflection_iteration,
+                "paragraph_title": p_dict.get("title", "") if isinstance(p_dict, dict) else "",
+                "query": search.get("query", ""),
+                "url": search.get("url"),
+                "title": search.get("title"),
+                "content": (search.get("content", "") or "")[:500],
+                "score": search.get("score"),
+                "search_count": len(search_history),
+                "reflection_count": research.get("reflection_iteration", 0),
             })
     return citations

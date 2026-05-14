@@ -31,7 +31,7 @@ from typing import List, Dict, Any, Optional, Literal
 from dataclasses import dataclass, field
 from ..utils.db import fetch_all
 from datetime import datetime, timedelta, date
-from ..utils.config import settings
+from app.config import settings
 
 # --- 1. 数据结构定义 ---
 
@@ -179,6 +179,7 @@ class MediaCrawlerDB:
             params.append(time_filter_param)
         
         final_query = f"({' ) UNION ALL ( '.join(all_queries)}) ORDER BY hotness_score DESC LIMIT %s"
+        logger.debug(f"执行的SQL查询为：\n{final_query}\n")
         raw_results = self._execute_query(final_query, tuple(params) + (limit,))
 
         formatted_results = [QueryResult(platform=r['p'], content_type=r['t'], title_or_content=r['title'], author_nickname=r.get('author'), url=r['url'], publish_time=self._to_datetime(r['ts']), engagement=self._extract_engagement(r), hotness_score=r.get('hotness_score', 0.0), source_keyword=r.get('source_keyword'), source_table=r['tbl']) for r in raw_results]
