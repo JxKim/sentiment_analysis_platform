@@ -61,12 +61,22 @@ def get_async_engine() -> AsyncEngine:
 async def fetch_all(query: str, params: Optional[Union[Iterable[Any], Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
     """
     执行只读查询并返回字典列表。
+
+    兼容两种参数风格：
+    - dict 参数 → 直接传给 SQLAlchemy text()（支持 :name 和 %(name)s 占位符）
+    - tuple/list 参数 → 将 %s 占位符依次替换为 :p0, :p1... 再绑定
     """
     engine: AsyncEngine = get_async_engine()
     async with engine.connect() as conn:
+        if params is not None and not isinstance(params, dict):
+            # tuple → 将 %s 替换为 :pN 命名参数
+            param_list = list(params)
+            for i in range(len(param_list)):
+                query = query.replace("%s", f":p{i}", 1)
+            params = {f"p{i}": v for i, v in enumerate(param_list)}
+
         result = await conn.execute(text(query), params or {})
         rows = result.mappings().all()
-        # 将 RowMapping 转换为普通字典
         return [dict(row) for row in rows]
 
 

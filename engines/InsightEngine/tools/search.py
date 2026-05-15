@@ -171,7 +171,8 @@ class MediaCrawlerDB:
 
             time_filter_sql, time_filter_param = "", None
             if table == 'weibo_note': time_filter_sql, time_filter_param = "`create_date_time` >= %s", start_time.strftime('%Y-%m-%d %H:%M:%S')
-            elif table in ['kuaishou_video', 'xhs_note', 'douyin_aweme']: time_col = 'time' if table == 'xhs_note' else 'create_time'; time_filter_sql, time_filter_param = f"`{time_col}` >= %s", str(int(start_time.timestamp() * 1000))
+            elif table == 'xhs_note': time_filter_sql, time_filter_param = "`time` >= %s", str(int(start_time.timestamp() * 1000))
+            elif table in ['kuaishou_video', 'douyin_aweme']: time_filter_sql, time_filter_param = f"`create_time` >= %s", str(int(start_time.timestamp()))
             elif table == 'zhihu_content': time_filter_sql, time_filter_param = "CAST(`created_time` AS UNSIGNED) >= %s", str(int(start_time.timestamp()))
             else: time_filter_sql, time_filter_param = "`create_time` >= %s", str(int(start_time.timestamp()))
 
