@@ -1,25 +1,12 @@
 """
-论坛主持人模块
-使用硅基流动的Qwen3模型作为论坛主持人，引导多个agent进行讨论
+论坛主持人，引导多个agent进行讨论
 """
 
 from openai import OpenAI
-import sys
-import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import re
-
-# 添加项目根目录到Python路径以导入config
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from app.config import settings
-
-# 添加utils目录到Python路径
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(current_dir)
-utils_dir = os.path.join(root_dir, 'utils')
-if utils_dir not in sys.path:
-    sys.path.append(utils_dir)
 
 from app.utils.retry_helper import with_graceful_retry, SEARCH_API_RETRY_CONFIG
 
@@ -27,7 +14,6 @@ from app.utils.retry_helper import with_graceful_retry, SEARCH_API_RETRY_CONFIG
 class ForumHost:
     """
     论坛主持人类
-    使用Qwen3-235B模型作为智能主持人
     """
     
     def __init__(self, api_key: str = None, base_url: Optional[str] = None, model_name: Optional[str] = None):
@@ -77,7 +63,7 @@ class ForumHost:
             user_prompt = self._build_user_prompt(parsed_content)
             
             # 调用API生成发言
-            response = self._call_qwen_api(system_prompt, user_prompt)
+            response = self._call_llm(system_prompt, user_prompt)
             
             if response["success"]:
                 speech = response["content"]
@@ -144,9 +130,9 @@ class ForumHost:
 6. **推进分析**：提出新的分析角度或需要关注的问题，引导后续讨论方向
 
 **Agent介绍**：
-- **INSIGHT Agent**：专注于私有舆情数据库的深度挖掘和分析，提供历史数据和模式对比
-- **MEDIA Agent**：擅长多模态内容分析，关注媒体报道、图片、视频等视觉信息的传播效果
-- **QUERY Agent**：负责精准信息搜索，提供最新的网络信息和实时动态
+- **INSIGHT Agent**：专注于私有舆情数据库的深度挖掘和分析，提供历史趋势和情感分析
+- **MEDIA Agent（舆情分析师）**：从网络媒体和社交平台收集公众舆论，分析舆论情绪和话题热度
+- **QUERY Agent（权威信息核查专家）**：从官方渠道和权威来源核实数据，提供政策文件和统计数据的核查
 
 **发言要求**：
 1. **综合性**：每次发言控制在1000字以内，内容应包括事件梳理、观点整合、问题引导等多个方面
@@ -186,10 +172,9 @@ class ForumHost:
 - 指出关键转折点和重要节点
 
 **二、观点整合与对比分析**
-- 综合INSIGHT、MEDIA、QUERY三个Agent的视角和发现
-- 指出不同数据源之间的共识与分歧
-- 分析每个Agent的信息价值和互补性
-- 如果发现事实错误或逻辑矛盾，请明确指出并给出理由
+- 综合INSIGHT（历史数据与趋势）、MEDIA（公众舆论与媒体反应）、QUERY（官方数据与权威核查）三个Agent的视角
+- 对比公众舆论（MEDIA）与官方事实（QUERY）之间的共识与分歧
+- 如发现舆论与权威数据存在矛盾，请明确指出并分析可能的原因
 
 **三、深层次分析与趋势预测**
 - 基于已有信息分析舆情的深层原因和影响因素
@@ -208,8 +193,8 @@ class ForumHost:
         return prompt
     
     @with_graceful_retry(SEARCH_API_RETRY_CONFIG, default_return={"success": False, "error": "API服务暂时不可用"})
-    def _call_qwen_api(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
-        """调用Qwen API"""
+    def _call_llm(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+        """调用LLM API"""
         try:
             current_time = datetime.now().strftime("%Y年%m月%d日%H时%M分")
             time_prefix = f"今天的实际时间是{current_time}"
