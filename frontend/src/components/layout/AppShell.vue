@@ -32,6 +32,7 @@ defineEmits<{
 <style scoped>
 .app-shell {
   height: 100vh;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   background: #f5f7fa;
@@ -44,16 +45,19 @@ defineEmits<{
 }
 .app-main {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 .embedded-section {
   flex: 1.8;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
   position: relative;
 }
 .console-section {
   flex: 1.2;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;

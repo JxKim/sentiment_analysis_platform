@@ -94,7 +94,11 @@ watch(() => state.value.status, (newStatus) => {
 .engine-panel {
   width: 100%;
   height: 100%;
-  overflow-y: auto;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 16px;
 }
 
@@ -131,16 +135,36 @@ watch(() => state.value.status, (newStatus) => {
 }
 
 .results-area {
+  flex: 1;
+  min-height: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.results-area :deep(.el-tabs) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.results-area :deep(.el-tabs__header) {
+  flex-shrink: 0;
 }
 .results-area :deep(.el-tabs__content) {
-  height: calc(100% - 40px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding-bottom: 32px;
+  box-sizing: border-box;
+}
+.results-area :deep(.el-tab-pane) {
+  min-height: 100%;
 }
 
 .markdown-body {
-  padding: 8px 0;
+  padding: 8px 0 48px;
   line-height: 1.75;
+  overflow-wrap: anywhere;
 }
 .markdown-body :deep(h1), .markdown-body :deep(h2), .markdown-body :deep(h3) {
   margin-top: 1em;
