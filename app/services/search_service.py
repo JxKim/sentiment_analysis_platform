@@ -167,14 +167,14 @@ def _run_query_research(query: str) -> Dict[str, Any]:
     from app.config import settings, Settings
     from engines.QueryEngine.agent import run_research
     from engines.QueryEngine.llms import LLMClient
-    from engines.MediaEngine.tools.search import BochaMultimodalSearch
+    from engines.MediaEngine.tools.search import TavilySearchWrapper
 
     model = settings.QUERY_ENGINE_MODEL_NAME or "deepseek-chat"
     config = Settings(
         QUERY_ENGINE_API_KEY=settings.QUERY_ENGINE_API_KEY,
         QUERY_ENGINE_BASE_URL=settings.QUERY_ENGINE_BASE_URL,
         QUERY_ENGINE_MODEL_NAME=model,
-        BOCHA_WEB_SEARCH_API_KEY=settings.BOCHA_WEB_SEARCH_API_KEY,
+        TAVILY_API_KEY=settings.TAVILY_API_KEY,
         MAX_REFLECTIONS=2, SEARCH_CONTENT_MAX_LENGTH=20000,
         OUTPUT_DIR=OUTPUT_DIRS['query'],
     )
@@ -183,7 +183,7 @@ def _run_query_research(query: str) -> Dict[str, Any]:
         model_name=config.QUERY_ENGINE_MODEL_NAME,
         base_url=config.QUERY_ENGINE_BASE_URL,
     )
-    search_agency = BochaMultimodalSearch(api_key=config.BOCHA_WEB_SEARCH_API_KEY)
+    search_agency = TavilySearchWrapper(api_key=config.TAVILY_API_KEY)
 
     def progress_callback(data):
         publish(EventType.ENGINE_PROGRESS, {"engine": "query", **data})
