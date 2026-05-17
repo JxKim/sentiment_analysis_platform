@@ -156,7 +156,7 @@ class KeywordOptimizer:
 2. **避免专业术语**：不使用"舆情"、"传播"、"倾向"、"展望"等官方词汇
 3. **简洁具体**：每个关键词要非常简洁明了，便于数据库匹配
 4. **情感丰富**：包含网民常用的情感表达词汇
-5. **数量控制**：最少提供10个关键词，最多提供20个关键词
+5. **数量控制**：最少提供3个关键词，最多提供5个关键词，只保留最相关、最精确的关键词
 6. **避免重复**：不要脱离初始查询的主题
 
 **重要提醒**：每个关键词都必须是一个不可分割的独立词条，严禁在词条内部包含空格。例如，应使用 "雷军班争议" 而不是错误的 "雷军班 争议"。
@@ -267,7 +267,7 @@ class KeywordOptimizer:
                     not any(bad_word in keyword for bad_word in bad_keywords)):
                     validated.append(keyword)
         
-        return validated[:20]  # 最多返回20个关键词
+        return validated[:5]  # 最多返回5个关键词
     
     def _fallback_keyword_extraction(self, original_query: str) -> List[str]:
         """备用关键词提取方案"""

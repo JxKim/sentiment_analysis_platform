@@ -48,6 +48,8 @@ def run_research(
         logger.warning(f"数据库连通性检查失败: {e}")
         raise RuntimeError("无法连接到本地舆情数据库，请检查数据库配置（DB_HOST/DB_PORT/DB_USER/DB_NAME）。") from e
 
+    os.makedirs(config.OUTPUT_DIR, exist_ok=True)
+
     try:
         graph = build_insight_graph(ctx)
         initial_state = {
