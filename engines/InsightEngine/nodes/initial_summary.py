@@ -31,6 +31,7 @@ class InitialSummaryNode:
 
         search_query = current_search.get("query", "")
         search_results = current_search.get("results", [])
+        search_metadata = current_search.get("metadata", {})
         logger.info("  - 生成初始总结...")
 
         summary_input = {
@@ -41,6 +42,19 @@ class InitialSummaryNode:
                 search_results, self.ctx.config.MAX_CONTENT_LENGTH,
             ),
         }
+
+        # 将增强管线产出的元信息（情感分析摘要、聚类统计）传给 LLM
+        if search_metadata:
+            summary_input["search_metadata"] = search_metadata
+            if search_metadata.get("sentiment_analysis", {}).get("summary"):
+                logger.info(
+                    f"  附带情感分析: {search_metadata['sentiment_analysis']['summary']}"
+                )
+            if search_metadata.get("clustering", {}).get("performed"):
+                c = search_metadata["clustering"]
+                logger.info(
+                    f"  附带聚类信息: {c['original_count']}→{c['sampled_count']} 条"
+                )
 
         try:
             host_speech = get_latest_host_speech()

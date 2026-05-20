@@ -3,9 +3,9 @@ Shared search execution utility for MediaEngine nodes.
 """
 
 from loguru import logger
+from ..context import MediaContext
 
-
-def execute_search_and_convert(ctx, search_output: dict, search_query: str, search_tool: str) -> list[dict]:
+def execute_search_and_convert(ctx: MediaContext, search_output: dict, search_query: str, search_tool: str) -> list[dict]:
     """Execute search and convert results to standard dict list."""
     kwargs = {}
     if search_tool in ("comprehensive_search", "web_search_only"):

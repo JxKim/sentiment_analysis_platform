@@ -7,9 +7,10 @@ from ..utils.source_classifier import (
     classify_source,
     source_rank,
 )
+from ..context import QueryContext
 
 
-def execute_search_and_convert(ctx, search_output: dict, search_query: str, search_tool: str) -> list[dict]:
+def execute_search_and_convert(ctx: QueryContext, search_output: dict, search_query: str, search_tool: str) -> list[dict]:
     kwargs = {}
     if search_tool == "search_last_24_hours":
         kwargs["max_results"] = 10

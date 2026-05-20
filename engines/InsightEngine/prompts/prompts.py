@@ -274,11 +274,21 @@ SYSTEM_PROMPT_FIRST_SUMMARY = f"""
 {json.dumps(input_schema_first_summary, indent=2, ensure_ascii=False)}
 </INPUT JSON SCHEMA>
 
+输入中可能额外包含 **search_metadata** 字段，它是搜索增强管线自动产出的元信息：
+- **sentiment_analysis**: 情感分析统计（情绪分布、高置信度样例、整体摘要）
+- **clustering**: 聚类采样信息（原始条数 → 去重 → 采样后的数据量变化）
+
+**search_metadata 使用原则**：
+- 情感分布是辅助信号，帮助你快速把握整体情绪倾向
+- 你的分析**仍必须以 search_results 中的具体文本为第一手材料**
+- 可引用情感分布数据，但要用具体评论佐证每一个结论
+- 如果 search_metadata 不存在（增强功能未启用或失败），忽略即可
+
 **你的核心任务：基于数据库搜索结果，撰写精炼的民意分析段落（300-500字）**
 
 **撰写要求：**
 
-1. **开篇概述**：用1-2句话点明本段核心发现
+1. **开篇概述**：用1-2句话点明本段核心发现，如有情感摘要可简述整体情绪
 
 2. **数据与观点呈现**：
    - 引用2-3条最有代表性的用户评论（标注平台和情感倾向）
@@ -384,6 +394,9 @@ SYSTEM_PROMPT_REFLECTION_SUMMARY = f"""
 <INPUT JSON SCHEMA>
 {json.dumps(input_schema_reflection_summary, indent=2, ensure_ascii=False)}
 </INPUT JSON SCHEMA>
+
+输入中可能额外包含 **search_metadata** 字段，是补充搜索的增强管线产出的元信息（情感分析、聚类统计）。
+使用原则与首次总结相同：辅助信号，仍需以具体文本为第一手材料。
 
 **你的核心任务：基于新搜索结果，精炼地补充和修正已有段落（目标：300-500字）**
 

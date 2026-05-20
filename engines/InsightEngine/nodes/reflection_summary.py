@@ -33,6 +33,7 @@ class ReflectionSummaryNode:
 
         search_query = current_search.get("query", "")
         search_results = current_search.get("results", [])
+        search_metadata = current_search.get("metadata", {})
 
         summary_input = {
             "title": para["title"],
@@ -43,6 +44,9 @@ class ReflectionSummaryNode:
             ),
             "paragraph_latest_state": research.get("latest_summary", ""),
         }
+
+        if search_metadata:
+            summary_input["search_metadata"] = search_metadata
 
         try:
             host_speech = get_latest_host_speech()

@@ -3,13 +3,18 @@ Shared search execution utility for InitialSearchNode and ReflectionSearchNode.
 Extracted from the old graph.py _execute_search_and_convert.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from loguru import logger
 from ..context import InsightContext
 
-def execute_search_and_convert(ctx:InsightContext, search_output: dict, search_query: str, search_tool: str) -> list[dict]:
-    """LLM 产出搜索参数 → 这个函数处理工具选择、参数补全、执行搜索、结果裁切和格式化 → 返回干净的 dict 列表喂回给 LLM"""
+def execute_search_and_convert(
+    ctx: InsightContext, search_output: dict, search_query: str, search_tool: str
+) -> Tuple[list[dict], dict]:
+    """LLM 产出搜索参数 → 处理工具选择、参数补全、执行搜索、结果裁切和格式化 →
+    返回 (results: list[dict], metadata: dict)，metadata 包含 sentiment_analysis / clustering
+    等增强管线产生的元信息，供 summary 节点写入 LLM prompt。
+    """
     kwargs: Dict[str, Any] = {}
 
     if search_tool in ("search_topic_by_date", "search_topic_on_platform"):
@@ -58,6 +63,14 @@ def execute_search_and_convert(ctx:InsightContext, search_output: dict, search_q
                 "author": r.author_nickname, "engagement": r.engagement,
             })
 
+    # 提取增强管线元信息（情感分析、聚类），不让它被丢弃
+    metadata: dict = {}
+    if response and response.parameters:
+        if "sentiment_analysis" in response.parameters:
+            metadata["sentiment_analysis"] = response.parameters["sentiment_analysis"]
+        if "clustering" in response.parameters:
+            metadata["clustering"] = response.parameters["clustering"]
+
     if results:
         msg = f"  - 找到 {len(results)} 个搜索结果"
         for r in results[:5]:
@@ -65,4 +78,4 @@ def execute_search_and_convert(ctx:InsightContext, search_output: dict, search_q
         logger.info(msg)
     else:
         logger.info("  - 未找到搜索结果")
-    return results
+    return results, metadata

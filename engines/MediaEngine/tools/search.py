@@ -24,7 +24,6 @@ import os
 import json
 import sys
 import sys
-sys.path.insert(0,"/home/m1881/pycharm_projects/Atguigu_SentinelAI")
 import datetime
 from typing import List, Dict, Any, Optional, Literal
 

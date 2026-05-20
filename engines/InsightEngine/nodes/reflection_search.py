@@ -46,7 +46,9 @@ class ReflectionSearchNode:
         search_tool = out.search_tool
         logger.info(f"    反思查询: {search_query}, 工具: {search_tool}")
 
-        search_results = execute_search_and_convert(self.ctx, out.model_dump(), search_query, search_tool)
+        search_results, search_metadata = execute_search_and_convert(
+            self.ctx, out.model_dump(), search_query, search_tool
+        )
 
         updated = deepcopy(state["paragraphs"])
         research = updated[idx].setdefault("research", {})
@@ -60,6 +62,7 @@ class ReflectionSearchNode:
 
         research["current_search"] = {
             "query": search_query, "tool": search_tool, "results": search_results,
+            "metadata": search_metadata,
         }
 
         return {"paragraphs": updated}

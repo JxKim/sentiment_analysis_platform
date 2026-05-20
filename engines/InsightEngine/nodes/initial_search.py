@@ -51,20 +51,26 @@ class InitialSearchNode:
         search_tool = out.search_tool
         logger.info(f"  - 搜索查询: {search_query}, 工具: {search_tool}")
 
-        search_results = execute_search_and_convert(self.ctx, out.model_dump(), search_query, search_tool)
+        search_results, search_metadata = execute_search_and_convert(
+            self.ctx, out.model_dump(), search_query, search_tool
+        )
 
         updated = deepcopy(paragraphs)
         research = updated[idx].setdefault("research", {})
         history = research.setdefault("search_history", [])
         for r in search_results:
             history.append({
-                "query": search_query, "url": r.get("url", ""), "title": r.get("title", ""),
-                "content": r.get("content", ""), "score": r.get("score"),
+                "query": search_query,
+                "url": r.get("url", ""),
+                "title": r.get("title", ""),
+                "content": r.get("content", ""),
+                "score": r.get("score"),
                 "timestamp": datetime.now().isoformat(),
             })
 
         research["current_search"] = {
             "query": search_query, "tool": search_tool, "results": search_results,
+            "metadata": search_metadata,
         }
 
         return {"paragraphs": updated}

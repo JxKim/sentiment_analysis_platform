@@ -109,8 +109,19 @@ class InsightContext:
         unique_results = self._deduplicate_results(all_results)
         logger.info(f"  总计 {total_count} 条，去重后 {len(unique_results)} 条")
 
+        clustering_meta = None
         if self.config.ENABLE_CLUSTERING:
+            before = len(unique_results)
             unique_results = self.clustering.cluster_and_sample(unique_results)
+            clustering_meta = {
+                "enabled": True,
+                "performed": len(unique_results) < before,
+                "original_count": before,
+                "deduplicated_count": before,  # dedup 在上一步已完成
+                "sampled_count": len(unique_results),
+                "max_results": self.config.MAX_CLUSTERED_RESULTS,
+                "results_per_cluster": self.config.RESULTS_PER_CLUSTER,
+            }
 
         response = DBResponse(
             tool_name=f"{tool_name}_optimized",
@@ -123,6 +134,9 @@ class InsightContext:
             results=unique_results,
             results_count=len(unique_results),
         )
+
+        if clustering_meta:
+            response.parameters["clustering"] = clustering_meta
 
         if self._sentiment_enabled(kwargs) and unique_results:
             logger.info("  🎭 开始对搜索结果进行情感分析...")
